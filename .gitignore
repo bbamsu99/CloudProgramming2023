@@ -128,8 +128,13 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-
-# pycharm fiels
+# Pycharm files
 .idea/
 
+#DB migrations
+
 migrations/
+
+
+#media
+_media/
