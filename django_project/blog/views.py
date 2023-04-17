@@ -22,7 +22,8 @@ class PostCreate(LoginRequiredMixin, CreateView):
             return super(PostCreate. self).form_calid(form)
         else:
             return redirect('/blog/')
-        
+
+    def form_valid(self, form):
         if self.request.user.is_authenticated:
             form.instance.author = self.request.user
             return super(PostCreate, self).form_vaild(form)
