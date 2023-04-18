@@ -1,12 +1,35 @@
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.shortcuts import render, redirect
-from django.views.generic import ListView, DetailView, CreateView
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.generic import ListView, DetailView, CreateView, UpdateView
 
 from .models import Post, Category, Tag
 
-class PostCreate(LoginRequiredMixin, CreateView):
+class PostUpdate(LoginRequiredMixin, UpdateView):
     model = Post
-    fields = ['title', 'content', 'head_image', 'file_upload', 'category', 'tag'] #4/11
+    fields = ['title', 'content', 'head_image', 'file_upload', 'category', 'tag']
+
+    template_name = 'blog/post_update.html'
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and self.get_object().author == request.user:
+            return super(PostUpdate,self).dispatch(request, *args, **kwargs)
+        else:
+            raise PermissionError
+
+
+class PostCreate(LoginRequiredMixin, UserPassesTestMixin, CreateView):
+    model = Post
+    fields = ['title', 'content', 'head_image', 'file_upload', 'category', 'tag']
+
+    def test_func(self):
+        return self.request.user.is_staff or self.request.user.is_superuser
+
+    def form_valid(self, form):
+
+        if self.request.user.is_authenticated and (self.request.user.is_superuser or self.request.user.is_staff):
+            form.instance.author = self.request.user
+            return super(PostCreate, self).form_valid(form)
+        else:
+            return redirect('/blog/')
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super(PostCreate, self).get_context_data()
@@ -14,25 +37,6 @@ class PostCreate(LoginRequiredMixin, CreateView):
         context['no_category_count'] = Post.objects.filter(category=None).count()
 
         return context
-'''
-    def form_valid(self, form):
-        current_user = self.request.user
-        if current_user.isauthenticated and (current_user.is_staff or current_user.is_superuser):
-            form.instance.author = current_user
-            return super(PostCreate. self).form_calid(form)
-        else:
-            return redirect('/blog/')
-
-    def form_valid(self, form):
-        if self.request.user.is_authenticated:
-            form.instance.author = self.request.user
-            return super(PostCreate, self).form_vaild(form)
-        else:
-            return redirect('/blog/')
-        '''
-
-
-
 
 class PostList(ListView):
     model = Post
